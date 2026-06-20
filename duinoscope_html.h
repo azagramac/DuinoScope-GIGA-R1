@@ -1,0 +1,592 @@
+#ifndef DUINOSCOPE_HTML_H
+#define DUINOSCOPE_HTML_H
+
+#include <Arduino.h>
+
+const char html_page[] PROGMEM = R"rawliteral(<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arduino DuinoScope GIGA R1 - BLE Control Panel</title>
+    <style>
+        :root {
+            --arduino-teal: #018083;
+            --arduino-teal-dark: #006066;
+            --arduino-teal-light: #00979D;
+            --arduino-orange: #E47125;
+            --arduino-orange-hover: #C55E1C;
+            --arduino-yellow: #FFCC00;
+            --arduino-cyan: #00FFFF;
+            --bg-color: #F3F6F6;
+            --card-bg: #FFFFFF;
+            --text-color: #2F3535;
+            --text-muted: #6B7280;
+            --border-color: #E3E8E8;
+            --ch0-color: #FFCC00;
+            --ch1-color: #00D5D5;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.5;
+            padding-bottom: 40px;
+        }
+
+        /* Arduino Header Bar styling */
+        header {
+            background-color: var(--arduino-teal);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header-logo-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-logo {
+            width: 36px;
+            height: 36px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--arduino-teal);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            flex-shrink: 0;
+        }
+
+        h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        /* Connect Button */
+        .btn-connect {
+            background-color: var(--arduino-orange);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .btn-connect:hover {
+            background-color: var(--arduino-orange-hover);
+        }
+
+        .btn-connect:active {
+            transform: scale(0.97);
+        }
+
+        .btn-connect.connected {
+            background-color: var(--arduino-teal-dark);
+        }
+
+        /* Main Layout */
+        main {
+            max-width: 900px;
+            margin: 25px auto;
+            padding: 0 15px;
+        }
+
+        .connection-status {
+            background-color: #EBF8FF;
+            border: 1px solid #BEE3F8;
+            color: #2B6CB0;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        @media (min-width: 768px) {
+            .grid-layout {
+                grid-template-columns: 1fr 1fr;
+            }
+            .span-2 {
+                grid-column: span 2;
+            }
+        }
+
+        /* UI Cards */
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+            padding: 20px;
+        }
+
+        .card-header {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* Channel Styling (Yellow/Cyan) */
+        .card-ch0 .card-header {
+            border-bottom-color: var(--ch0-color);
+            color: var(--arduino-teal-dark);
+        }
+
+        .card-ch1 .card-header {
+            border-bottom-color: var(--ch1-color);
+            color: var(--arduino-teal-dark);
+        }
+
+        /* Form elements */
+        .form-group {
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        select {
+            width: 100%;
+            padding: 10px;
+            font-size: 0.95rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background-color: #FAFAFA;
+            color: var(--text-color);
+            cursor: pointer;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        select:focus {
+            border-color: var(--arduino-teal-light);
+        }
+
+        /* Toggle Switches */
+        .switch-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .switch-label {
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #CCC;
+            transition: .3s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--arduino-teal-light);
+        }
+
+        .card-ch0 input:checked + .slider {
+            background-color: var(--ch0-color);
+        }
+
+        .card-ch1 input:checked + .slider {
+            background-color: var(--ch1-color);
+        }
+
+        input:focus + .slider {
+            box-shadow: 0 0 1px var(--arduino-teal-light);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+
+        /* Telemetry display */
+        .telemetry-box {
+            background-color: #FAFAFA;
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .telemetry-val {
+            font-family: monospace;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--text-color);
+        }
+
+        .telemetry-ch0 .telemetry-val {
+            color: #B28F00; /* Darker yellow for text readability */
+        }
+
+        .telemetry-ch1 .telemetry-val {
+            color: #008787; /* Darker cyan for text readability */
+        }
+
+        .overlay-disabled {
+            pointer-events: none;
+            opacity: 0.5;
+            transition: opacity 0.3s;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-logo-container">
+            <div class="header-logo">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12c-2-2.67-4-4-6-4a4 4 0 1 0 0 8c2 0 4-1.33 6-4Zm0 0c2 2.67 4 4 6 4a4 4 0 1 0 0-8c-2 0-4 1.33-6 4Z"/></svg>
+            </div>
+            <h1>DuinoScope GIGA R1 - Control WiFi</h1>
+        </div>
+        <button id="connectBtn" class="btn-connect" style="background-color: #6B7280; pointer-events: none;">Desconectado</button>
+    </header>
+
+    <main>
+        <div id="statusMsg" class="connection-status">
+            Conectando a la red WiFi del DuinoScope GIGA R1...
+        </div>
+
+        <div id="controlsContainer" class="grid-layout overlay-disabled">
+
+            <!-- CHANNEL 0 CARD -->
+            <div class="card card-ch0">
+                <div class="card-header">
+                    <span class="switch-label">Canal CH0</span>
+                    <label class="switch">
+                        <input type="checkbox" id="ch0Shown">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label for="ch0Vdiv">Voltios/Div</label>
+                    <select id="ch0Vdiv">
+                        <option value="0">0.1 V</option>
+                        <option value="1">0.2 V</option>
+                        <option value="2">0.5 V</option>
+                        <option value="3">1.0 V</option>
+                        <option value="4">2.0 V</option>
+                    </select>
+                </div>
+
+                <div class="telemetry-box telemetry-ch0">
+                    <label>Mediciones CH0</label>
+                    <div id="ch0Telemetry" class="telemetry-val" style="font-size: 1.25rem; margin-bottom: 8px;">Standby</div>
+                    <div class="telemetry-details" style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 0.85rem; border-top: 1px solid var(--border-color); padding-top: 8px; margin-top: 8px; text-align: left; color: var(--text-muted);">
+                        <div><strong>Frec:</strong> <span id="ch0DetailFreq" style="font-family: monospace; color: var(--text-color);">--</span></div>
+                        <div><strong>Vp-p:</strong> <span id="ch0DetailVpp" style="font-family: monospace; color: var(--text-color);">--</span></div>
+                        <div><strong>Vmax:</strong> <span id="ch0DetailVmax" style="font-family: monospace; color: var(--text-color);">--</span></div>
+                        <div><strong>Vmin:</strong> <span id="ch0DetailVmin" style="font-family: monospace; color: var(--text-color);">--</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CHANNEL 1 CARD -->
+            <div class="card card-ch1">
+                <div class="card-header">
+                    <span class="switch-label">Canal CH1</span>
+                    <label class="switch">
+                        <input type="checkbox" id="ch1Shown">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label for="ch1Vdiv">Voltios/Div</label>
+                    <select id="ch1Vdiv">
+                        <option value="0">0.1 V</option>
+                        <option value="1">0.2 V</option>
+                        <option value="2">0.5 V</option>
+                        <option value="3">1.0 V</option>
+                        <option value="4">2.0 V</option>
+                    </select>
+                </div>
+
+                <div class="telemetry-box telemetry-ch1">
+                    <label>Mediciones CH1</label>
+                    <div id="ch1Telemetry" class="telemetry-val" style="font-size: 1.25rem; margin-bottom: 8px;">Standby</div>
+                    <div class="telemetry-details" style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 0.85rem; border-top: 1px solid var(--border-color); padding-top: 8px; margin-top: 8px; text-align: left; color: var(--text-muted);">
+                        <div><strong>Frec:</strong> <span id="ch1DetailFreq" style="font-family: monospace; color: var(--text-color);">--</span></div>
+                        <div><strong>Vp-p:</strong> <span id="ch1DetailVpp" style="font-family: monospace; color: var(--text-color);">--</span></div>
+                        <div><strong>Vmax:</strong> <span id="ch1DetailVmax" style="font-family: monospace; color: var(--text-color);">--</span></div>
+                        <div><strong>Vmin:</strong> <span id="ch1DetailVmin" style="font-family: monospace; color: var(--text-color);">--</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TIMEBASE CARD -->
+            <div class="card">
+                <div class="card-header">Base de Tiempos</div>
+                <div class="form-group">
+                    <label for="timebase">Tiempo/Div</label>
+                    <select id="timebase">
+                        <option value="0">10 us (1 Msps)</option>
+                        <option value="1">20 us (1 Msps)</option>
+                        <option value="2">50 us (800 ksps)</option>
+                        <option value="3">100 us (800 ksps)</option>
+                        <option value="4">200 us (400 ksps)</option>
+                        <option value="5">500 us (160 ksps)</option>
+                        <option value="6">1 ms (80 ksps)</option>
+                        <option value="7">2 ms (40 ksps)</option>
+                        <option value="8">5 ms (16 ksps)</option>
+                        <option value="9">10 ms (8 ksps)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- TRIGGER CARD -->
+            <div class="card">
+                <div class="card-header">Disparo (Trigger)</div>
+                <div class="form-group">
+                    <label for="trigMode">Modo de Trigger</label>
+                    <select id="trigMode">
+                        <option value="0">Trigger: OFF</option>
+                        <option value="1">CH0 - Flanco de Subida (Rising)</option>
+                        <option value="2">CH0 - Flanco de Bajada (Falling)</option>
+                        <option value="3">CH1 - Flanco de Subida (Rising)</option>
+                        <option value="4">CH1 - Flanco de Bajada (Falling)</option>
+                    </select>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <footer style="margin-top: 40px; border-top: 1px solid var(--border-color); padding: 20px; text-align: center; font-size: 0.85rem; color: var(--text-muted);">
+        <p>
+            Arduino DuinoScope GIGA R1 Control Panel |
+            Firmware: <span id="fwVersion" style="font-weight: 600;">Desconectado</span> |
+            GitHub: <a href="https://github.com/azagramac/DuinoScope-GIGA-R1" target="_blank" style="color: var(--arduino-teal); text-decoration: none; font-weight: 600;">DuinoScope-GIGA-R1</a>
+        </p>
+    </footer>
+
+    <script>
+        // UI references
+        const connectBtn = document.getElementById('connectBtn');
+        const statusMsg = document.getElementById('statusMsg');
+        const controlsContainer = document.getElementById('controlsContainer');
+        const fwVersionText = document.getElementById('fwVersion');
+
+        const elements = {
+            ch0Shown: document.getElementById('ch0Shown'),
+            ch1Shown: document.getElementById('ch1Shown'),
+            ch0Vdiv: document.getElementById('ch0Vdiv'),
+            ch1Vdiv: document.getElementById('ch1Vdiv'),
+            timebase: document.getElementById('timebase'),
+            trigMode: document.getElementById('trigMode'),
+            ch0Telemetry: document.getElementById('ch0Telemetry'),
+            ch1Telemetry: document.getElementById('ch1Telemetry')
+        };
+
+        // Interaction locks to prevent incoming telemetry from overriding user actions
+        let activeInteractions = {};
+
+        function setLock(key) {
+            activeInteractions[key] = Date.now();
+        }
+
+        function isLocked(key) {
+            const time = activeInteractions[key];
+            if (!time) return false;
+            return (Date.now() - time) < 1500; // 1.5s timeout
+        }
+
+        // Setup UI handlers to send HTTP requests
+        async function sendSetting(param, value) {
+            setLock(param);
+            try {
+                const response = await fetch(`/set?${param}=${value}`);
+                if (!response.ok) {
+                    console.error('Failed to send setting:', param, value);
+                }
+            } catch (e) {
+                console.error('Network error sending setting:', e);
+            }
+        }
+
+        elements.ch0Shown.onchange = (e) => sendSetting('ch0Shown', e.target.checked ? 1 : 0);
+        elements.ch1Shown.onchange = (e) => sendSetting('ch1Shown', e.target.checked ? 1 : 0);
+        elements.ch0Vdiv.onchange = (e) => sendSetting('ch0Vdiv', e.target.value);
+        elements.ch1Vdiv.onchange = (e) => sendSetting('ch1Vdiv', e.target.value);
+        elements.timebase.onchange = (e) => sendSetting('timebase', e.target.value);
+        elements.trigMode.onchange = (e) => sendSetting('trigMode', e.target.value);
+
+        function formatFreq(freq) {
+            if (freq < 1.0) return '--';
+            if (freq < 1000.0) return freq.toFixed(0) + ' Hz';
+            if (freq < 1000000.0) return (freq / 1000.0).toFixed(2) + ' kHz';
+            return (freq / 1000000.0).toFixed(2) + ' MHz';
+        }
+
+        function formatVolt(v) {
+            if (Math.abs(v) > 500.0) return '--';
+            return v.toFixed(2) + ' V';
+        }
+
+        function updateUI(state) {
+            if (!isLocked('ch0Shown')) elements.ch0Shown.checked = state.ch0Shown;
+            if (!isLocked('ch1Shown')) elements.ch1Shown.checked = state.ch1Shown;
+            if (!isLocked('ch0Vdiv')) elements.ch0Vdiv.value = state.ch0Vdiv;
+            if (!isLocked('ch1Vdiv')) elements.ch1Vdiv.value = state.ch1Vdiv;
+            if (!isLocked('timebase')) elements.timebase.value = state.timebase;
+            if (!isLocked('trigMode')) elements.trigMode.value = state.trigMode;
+
+            elements.ch0Telemetry.textContent = state.ch0Telemetry || 'Standby';
+            elements.ch1Telemetry.textContent = state.ch1Telemetry || 'Standby';
+            fwVersionText.textContent = 'v' + (state.fw || '1.0.0');
+
+            if (state.ch0Shown) {
+                document.getElementById('ch0DetailFreq').textContent = formatFreq(state.ch0Freq);
+                document.getElementById('ch0DetailVpp').textContent = formatVolt(state.ch0Vpp);
+                document.getElementById('ch0DetailVmax').textContent = formatVolt(state.ch0Vmax);
+                document.getElementById('ch0DetailVmin').textContent = formatVolt(state.ch0Vmin);
+            } else {
+                document.getElementById('ch0DetailFreq').textContent = '--';
+                document.getElementById('ch0DetailVpp').textContent = '--';
+                document.getElementById('ch0DetailVmax').textContent = '--';
+                document.getElementById('ch0DetailVmin').textContent = '--';
+            }
+
+            if (state.ch1Shown) {
+                document.getElementById('ch1DetailFreq').textContent = formatFreq(state.ch1Freq);
+                document.getElementById('ch1DetailVpp').textContent = formatVolt(state.ch1Vpp);
+                document.getElementById('ch1DetailVmax').textContent = formatVolt(state.ch1Vmax);
+                document.getElementById('ch1DetailVmin').textContent = formatVolt(state.ch1Vmin);
+            } else {
+                document.getElementById('ch1DetailFreq').textContent = '--';
+                document.getElementById('ch1DetailVpp').textContent = '--';
+                document.getElementById('ch1DetailVmax').textContent = '--';
+                document.getElementById('ch1DetailVmin').textContent = '--';
+            }
+        }
+
+        let firstConnection = true;
+        let failedAttempts = 0;
+
+        async function pollTelemetry() {
+            try {
+                const response = await fetch('/telemetry');
+                if (response.ok) {
+                    const data = await response.json();
+                    updateUI(data);
+                    failedAttempts = 0;
+
+                    if (firstConnection) {
+                        firstConnection = false;
+                        controlsContainer.classList.remove('overlay-disabled');
+                    }
+
+                    statusMsg.textContent = 'Conectado';
+                    statusMsg.style.backgroundColor = '#C6F6D5';
+                    statusMsg.style.borderColor = '#9AE6B4';
+                    statusMsg.style.color = '#22543D';
+
+                    connectBtn.textContent = 'Conectado';
+                    connectBtn.style.backgroundColor = 'var(--arduino-teal-dark)';
+                } else {
+                    failedAttempts++;
+                    if (failedAttempts >= 3) {
+                        handleDisconnect();
+                    }
+                }
+            } catch (e) {
+                failedAttempts++;
+                if (failedAttempts >= 3) {
+                    handleDisconnect();
+                }
+            }
+        }
+
+        function handleDisconnect() {
+            statusMsg.textContent = 'Sin conexión con DuinoScope GIGA R1. Reintentando...';
+            statusMsg.style.backgroundColor = '#FED7D7';
+            statusMsg.style.borderColor = '#FEB2B2';
+            statusMsg.style.color = '#742A2A';
+
+            connectBtn.textContent = 'Desconectado';
+            connectBtn.style.backgroundColor = '#6B7280';
+
+            controlsContainer.classList.add('overlay-disabled');
+            firstConnection = true;
+        }
+
+        setInterval(pollTelemetry, 250);
+        pollTelemetry();
+    </script>
+</body>
+</html>)rawliteral";
+
+#endif
